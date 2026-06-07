@@ -1,0 +1,16 @@
+package com.exemplo.taskapp.ui.tasklist
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.exemplo.taskapp.data.repository.TaskRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+
+class TaskListViewModel(repository: TaskRepository) : ViewModel() {
+    // Expõe a lista como um StateFlow para o Compose observar
+    val tasksState = repository.allTasks.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+}
