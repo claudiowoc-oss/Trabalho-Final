@@ -1,0 +1,46 @@
+package com.exemplo.taskapp
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.exemplo.taskapp.data.local.TaskDatabase
+import com.exemplo.taskapp.data.repository.TaskRepository
+import com.exemplo.taskapp.navigation.Screen
+import com.exemplo.taskapp.ui.taskdetail.TaskDetailScreen
+import com.exemplo.taskapp.ui.taskdetail.TaskDetailViewModel
+import com.exemplo.taskapp.ui.tasklist.TaskListScreen
+import com.exemplo.taskapp.ui.tasklist.TaskListViewModel
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Inicialização manual das dependências para escopo simples do app
+        val database = TaskDatabase.getDatabase(this)
+        val repository = TaskRepository(database.taskDao())
+
+        setContent {
+            val navController = rememberNavController()
+
+            NavHost(navController = navController, startDestination = Screen.TaskList.route) {
+                composable(Screen.TaskList.route) {
+                    val viewModel = TaskListViewModel(repository)
+                    TaskListScreen(
+                        viewModel = viewModel,
+                        onNavigateToDetail = { navController.navigate(Screen.TaskDetail.route) }
+                    )
+                }
+                composable(Screen.TaskDetail.route) {
+                    val viewModel = TaskDetailViewModel(repository)
+                    TaskDetailScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+            }
+        }
+    }
+}
