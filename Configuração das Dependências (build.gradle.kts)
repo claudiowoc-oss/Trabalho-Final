@@ -1,0 +1,10 @@
+dependencies {
+    // Jetpack Compose Navigation
+    implementation("androidx.navigation:navigation-compose:2.8.5")
+
+    // Room Database
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion") // Ou ksp, dependendo do seu setup
+}
