@@ -1,0 +1,24 @@
+package com.exemplo.taskapp.ui.taskdetail
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.exemplo.taskapp.data.local.TaskEntity
+import com.exemplo.taskapp.data.repository.TaskRepository
+import kotlinx.coroutines.launch
+
+class TaskDetailViewModel(private val repository: TaskRepository) : ViewModel() {
+    var title by mutableStateOf("")
+    var description by mutableStateOf("")
+
+    fun saveTask(onSuccess: () -> Unit) {
+        if (title.isNotBlank()) {
+            viewModelScope.launch {
+                repository.insert(TaskEntity(title = title, description = description))
+                onSuccess() // Navega de volta após salvar
+            }
+        }
+    }
+}
