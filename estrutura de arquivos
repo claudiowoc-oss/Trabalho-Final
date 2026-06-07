@@ -1,0 +1,16 @@
+ui/
+  ├── tasklist/
+  │     ├── TaskListScreen.kt
+  │     └── TaskListViewModel.kt
+  └── taskdetail/
+        ├── TaskDetailScreen.kt
+        └── TaskDetailViewModel.kt
+data/
+  ├── local/
+  │     ├── TaskDatabase.kt
+  │     ├── TaskDao.kt
+  │     └── TaskEntity.kt
+  └── repository/
+        └── TaskRepository.kt
+navigation/
+  └── Screen.kt
