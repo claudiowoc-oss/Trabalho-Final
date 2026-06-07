@@ -1,0 +1,45 @@
+package com.exemplo.taskapp.ui.taskdetail
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskDetailScreen(viewModel: TaskDetailViewModel, onBack: () -> Unit) {
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Nova Tarefa") }) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = viewModel.title,
+                onValueChange = { viewModel.title = it },
+                label = { Text("Título") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = viewModel.description,
+                onValueChange = { viewModel.description = it },
+                label = { Text("Descrição") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
+            )
+
+            Button(
+                onClick = { viewModel.saveTask(onSuccess = onBack) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Salvar Tarefa")
+            }
+        }
+    }
+}
