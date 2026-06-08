@@ -1,0 +1,255 @@
+package com.exemplo.taskapp.ui.tasklist
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.exemplo.taskapp.data.repository.TaskRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+
+class TaskListViewModel(repository: TaskRepository) : ViewModel() {
+    // Expõe a lista como um StateFlow para o Compose observar
+    val tasksState = repository.allTasks.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+}
+package com.exemplo.taskapp.ui.taskdetail
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.exemplo.taskapp.data.local.TaskEntity
+import com.exemplo.taskapp.data.repository.TaskRepository
+import kotlinx.coroutines.launch
+
+class TaskDetailViewModel(private val repository: TaskRepository) : ViewModel() {
+    var title by mutableStateOf("")
+    var description by mutableStateOf("")
+
+    fun saveTask(onSuccess: () -> Unit) {
+        if (title.isNotBlank()) {
+            viewModelScope.launch {
+                repository.insert(TaskEntity(title = title, description = description))
+                onSuccess() // Navega de volta após salvar
+            }
+        }
+    }
+}package com.exemplo.taskapp.ui.tasklist
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskListScreen(viewModel: TaskListViewModel, onNavigateToDetail: () -> Unit) {
+    val tasks by viewModel.tasksState.collectAsState()
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Minhas Tarefas") }) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onNavigateToDetail) {
+                Icon(Icons.Default.Add, contentDescription = "Adicionar Tarefa")
+            }
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(tasks) { task ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = task.title, style = MaterialTheme.typography.titleLarge)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = task.description, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+    }
+}dependencies {
+    // Jetpack Compose Navigation
+    implementation("androidx.navigation:navigation-compose:2.8.5")
+
+    // Room Database
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion") // Ou ksp, dependendo do seu setup
+}package com.exemplo.taskapp.data.repository
+
+import com.exemplo.taskapp.data.local.TaskDao
+import com.exemplo.taskapp.data.local.TaskEntity
+import kotlinx.coroutines.flow.Flow
+
+class TaskRepository(private val taskDao: TaskDao) {
+    val allTasks: Flow<List<TaskEntity>> = taskDao.getAllTasks()
+
+    suspend fun insert(task: TaskEntity) {
+        taskDao.insertTask(task)
+    }
+}package com.exemplo.taskapp.data.local
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "tasks")
+data class TaskEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val title: String,
+    val description: String
+)package com.exemplo.taskapp.data.local
+
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+
+@Database(entities = [TaskEntity::class], version = 1, exportSchema = false)
+abstract class TaskDatabase : RoomDatabase() {
+    abstract fun taskDao(): TaskDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: TaskDatabase? = null
+
+        fun getDatabase(context: Context): TaskDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    TaskDatabase::class.java,
+                    "task_database"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+}package com.exemplo.taskapp.data.local
+
+import androidx.room.*
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface TaskDao {
+    @Query("SELECT * FROM tasks ORDER BY id DESC")
+    fun getAllTasks(): Flow<List<TaskEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTask(task: TaskEntity)
+
+    @Delete
+    suspend fun deleteTask(task: TaskEntity)
+}package com.exemplo.taskapp.ui.taskdetail
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TaskDetailScreen(viewModel: TaskDetailViewModel, onBack: () -> Unit) {
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Nova Tarefa") }) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = viewModel.title,
+                onValueChange = { viewModel.title = it },
+                label = { Text("Título") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = viewModel.description,
+                onValueChange = { viewModel.description = it },
+                label = { Text("Descrição") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
+            )
+
+            Button(
+                onClick = { viewModel.saveTask(onSuccess = onBack) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Salvar Tarefa")
+            }
+        }
+    }
+}package com.exemplo.taskapp.navigation
+
+sealed class Screen(val route: String) {
+    object TaskList : Screen("task_list")
+    object TaskDetail : Screen("task_detail")
+}package com.exemplo.taskapp
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.exemplo.taskapp.data.local.TaskDatabase
+import com.exemplo.taskapp.data.repository.TaskRepository
+import com.exemplo.taskapp.navigation.Screen
+import com.exemplo.taskapp.ui.taskdetail.TaskDetailScreen
+import com.exemplo.taskapp.ui.taskdetail.TaskDetailViewModel
+import com.exemplo.taskapp.ui.tasklist.TaskListScreen
+import com.exemplo.taskapp.ui.tasklist.TaskListViewModel
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Inicialização manual das dependências para escopo simples do app
+        val database = TaskDatabase.getDatabase(this)
+        val repository = TaskRepository(database.taskDao())
+
+        setContent {
+            val navController = rememberNavController()
+
+            NavHost(navController = navController, startDestination = Screen.TaskList.route) {
+                composable(Screen.TaskList.route) {
+                    val viewModel = TaskListViewModel(repository)
+                    TaskListScreen(
+                        viewModel = viewModel,
+                        onNavigateToDetail = { navController.navigate(Screen.TaskDetail.route) }
+                    )
+                }
+                composable(Screen.TaskDetail.route) {
+                    val viewModel = TaskDetailViewModel(repository)
+                    TaskDetailScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+            }
+        }
+    }
+}
