@@ -37,7 +37,8 @@ class TaskDetailViewModel(private val repository: TaskRepository) : ViewModel() 
             }
         }
     }
-}package com.exemplo.taskapp.ui.tasklist
+}
+package com.exemplo.taskapp.ui.tasklist
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -85,7 +86,8 @@ fun TaskListScreen(viewModel: TaskListViewModel, onNavigateToDetail: () -> Unit)
             }
         }
     }
-}dependencies {
+}
+dependencies {
     // Jetpack Compose Navigation
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
@@ -94,7 +96,8 @@ fun TaskListScreen(viewModel: TaskListViewModel, onNavigateToDetail: () -> Unit)
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     kapt("androidx.room:room-compiler:$roomVersion") // Ou ksp, dependendo do seu setup
-}package com.exemplo.taskapp.data.repository
+}
+package com.exemplo.taskapp.data.repository
 
 import com.exemplo.taskapp.data.local.TaskDao
 import com.exemplo.taskapp.data.local.TaskEntity
@@ -106,7 +109,8 @@ class TaskRepository(private val taskDao: TaskDao) {
     suspend fun insert(task: TaskEntity) {
         taskDao.insertTask(task)
     }
-}package com.exemplo.taskapp.data.local
+}
+package com.exemplo.taskapp.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -116,7 +120,8 @@ data class TaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val title: String,
     val description: String
-)package com.exemplo.taskapp.data.local
+)
+package com.exemplo.taskapp.data.local
 
 import android.content.Context
 import androidx.room.Database
@@ -143,7 +148,8 @@ abstract class TaskDatabase : RoomDatabase() {
             }
         }
     }
-}package com.exemplo.taskapp.data.local
+}
+package com.exemplo.taskapp.data.local
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
@@ -158,7 +164,8 @@ interface TaskDao {
 
     @Delete
     suspend fun deleteTask(task: TaskEntity)
-}package com.exemplo.taskapp.ui.taskdetail
+}
+package com.exemplo.taskapp.ui.taskdetail
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -202,12 +209,14 @@ fun TaskDetailScreen(viewModel: TaskDetailViewModel, onBack: () -> Unit) {
             }
         }
     }
-}package com.exemplo.taskapp.navigation
+}
+package com.exemplo.taskapp.navigation
 
 sealed class Screen(val route: String) {
     object TaskList : Screen("task_list")
     object TaskDetail : Screen("task_detail")
-}package com.exemplo.taskapp
+}
+package com.exemplo.taskapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
